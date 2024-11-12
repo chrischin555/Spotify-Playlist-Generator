@@ -1,10 +1,13 @@
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, redirect, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyOAuth
+from spotipy.cache_handler import FlaskSessionCacheHandler
 
 app = Flask(__name__)
 # create database instance, connect app file to database
@@ -18,10 +21,30 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+#Spotipy variables, stopify dev info + sp_oauth
+client_id = '0985d3da19014f2588b78ccd7d172db0'
+client_secret = 'a73d7992813e4ffab54fc1b719944dca'
+redirect_uri = 'http://localhost:5000/callback'
+scope = 'playlist-read-private, playlist-modify-public'
+
+cache_handler = FlaskSessionCacheHandler(session)
+
+sp_oauth = SpotifyOAuth( 
+    client_id = client_id,
+    client_secret = client_secret,
+    redirect_uri = redirect_uri,
+    scope = scope,
+    cache_handler = cache_handler,
+    show_dialog = True
+)
+
+sp = Spotify(auth_manager = sp_oauth)
+
 # Load user call back; used to reload user object from user id stored in the session
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 
 # table for database with the three columns
@@ -78,6 +101,10 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
+                #For logging into Spotify
+                if not sp_oauth.validate_token(cache_handler.get_cached_token()): #if not logged in in spotify
+                    auth_url = sp_oauth.get_authorize_url() #sign in through spotify
+                    return redirect(auth_url)
                 return redirect(url_for('dashboard'))
     return render_template('login.html', form=form) # Create form variable in HTML template
 
@@ -85,13 +112,6 @@ def login():
 @login_required
 def dashboard():
     return render_template('dashboard.html')
-
-@app.route('/logout', methods = ['GET', 'POST'])
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
 
 @app.route('/register', methods = ['GET', 'POST'])
 def register():
@@ -109,6 +129,32 @@ def register():
         return redirect(url_for('login'))
     
     return render_template('register.html', form=form)
+
+#spotify token refresh
+@app.route('/callback')
+def callback():
+    sp_oauth.get_access_token(request.args['code']) #refreshes the spotify token (?)
+    return redirect(url_for('dashboard'))
+
+#spotipy access playlists
+@app.route('/get_playlists')
+def get_playlists():
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()): #if not logged in in spotify
+        auth_url = sp_oauth.get_authorized_url() #sign in through spotify
+        return redirect(auth_url)
+    
+    playlists = sp.current_user_playlists()
+    playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
+    playlists_html = '<br>'.join(f'{name}: {url}' for name, url in playlists_info)
+    
+    return playlists_html
+
+@app.route('/logout', methods = ['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
