@@ -12,7 +12,7 @@ load_dotenv()
 
 client_id  = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
-redirect_uri = 'http://localhost/3000'
+redirect_uri = 'http://localhost:3000'
 openai.api_key = "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"
 
 scope = "streaming"
