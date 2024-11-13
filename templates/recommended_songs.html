@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>recommended_songs</title>
+</head>
+<body>
+    {% if nameOfGame %}
+        <h1>Recommended Songs</h1>
+        <p>{{ GPTResponse }}</p>
+        {% if recommendedSongs %}
+            <h2>Recommended Tracks:</h2>
+            <ul>
+                {% for recommended in recommendedSongs %}
+                    <li>{{ recommended }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Some error or something</p>
+        {% endif %}
+    {% else %}
+        <h1>Get new song recommendations</h1>
+        <br>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div>
+                {{ form.nameOfGame.label }} {{ form.nameOfGame() }}
+            </div>
+            <div>
+                {{ form.submit }}
+            </div>
+        </form>
+    {% endif %}
+</body>
+</html>

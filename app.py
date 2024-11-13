@@ -1,10 +1,15 @@
+import json
 from flask import Flask, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Length, ValidationError
+from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
 from flask_bcrypt import Bcrypt
+from song_search import SpotifySongSearch
+from song_search_form import SongSearchForm
+from recommend_songs import RecommendSongs
+import openai
 
 app = Flask(__name__)
 # create database instance, connect app file to database
@@ -12,6 +17,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 db = SQLAlchemy(app)
 app.config['SECRET_KEY'] = "HjsX4l6X8dcJ7MHKOQaudZ4YD2yFTGwW" # secret key to establish cookie
 bcrypt = Bcrypt(app)
+
 
 # Allows our app and flask login to work together and handle things when logging in, loading in users, etc.
 login_manager = LoginManager()
@@ -110,7 +116,46 @@ def register():
     
     return render_template('register.html', form=form)
 
+# test route, remove later because i just used this for testing
+@app.route('/song_search', methods = ['GET', 'POST'])
+def song_search():
+    artistName = None
+    form = SongSearchForm()
+    songs = []
+
+    # Validations
+    if form.validate_on_submit():
+        artistName = form.artistName.data
+        form.artistName.data = ''
+        song_search = SpotifySongSearch()
+        songs = song_search.getArtistSongs(artistName)
+    return render_template('song_search.html', artistName = artistName, form = form, songs = songs)
+
+@app.route('/recommend_songs', methods = ['GET', 'POST'])
+def recommend_songs():
+    nameOfGame = None
+    form = RecommendSongs()
+    GPTResponse = None
+    recommendedSongs = []
+
+    # Validations
+    if form.validate_on_submit():
+        nameOfGame = form.nameOfGame.data
+        form.nameOfGame.data = ''
+        song_search = SpotifySongSearch()
+        GPTResponse = song_search.chat_with_GPT(nameOfGame)
+        artistName = json.loads(GPTResponse.function_call.arguments).get("artistName")
+        genre = json.loads(GPTResponse.function_call.arguments).get("genre")
+        recommendedSongs = song_search.getRecommendedSongs(artistName, genre)
+    return render_template('recommended_songs.html', nameOfGame = nameOfGame, form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs)
+
 if __name__ == '__main__':
     app.run(debug=True)
+    # spotify_search = SpotifySongSearch()
+    # artist = spotify_search.searchForArtist("XG")
+    # print(artist)
+    # artistID = spotify_search.getArtistID(artist)
+    # albums = spotify_search.getArtistAlbums(artist)
+    # tracks = spotify_search.getArtistSongs(artist)
 
 
