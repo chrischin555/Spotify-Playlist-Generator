@@ -22,8 +22,8 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 #Spotipy variables, stopify dev info + sp_oauth
-client_id = '0985d3da19014f2588b78ccd7d172db0'
-client_secret = 'a73d7992813e4ffab54fc1b719944dca'
+client_id = 'e807071121d840a49550cfd8090ac291'
+client_secret = '0a845b2e52ba4ff3bfc46948762eeabf'
 redirect_uri = 'http://localhost:5000/callback'
 scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
 
@@ -145,8 +145,11 @@ def callback():
 #spotipy access playlists
 @app.route('/get_playlists')
 def get_playlists():
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()): # if not logged in in Spotify
+    token_info = cache_handler.get_cached_token()
+    if not sp_oauth.validate_token(token_info): # if not logged in in Spotify
         auth_url = sp_oauth.get_authorized_url() # sign in through Spotify
+        sp.oath.refresh_access_token(token_info['refresh_token'])
+        token_info = cache_handler.get_cached_token()
         return redirect(auth_url)
 
     playlists = sp.current_user_playlists()
@@ -189,6 +192,7 @@ def create_playlist():
 @app.route('/logout', methods = ['GET', 'POST'])
 @login_required
 def logout():
+    cache_handler.clear()
     logout_user()
     return redirect(url_for('login'))
 
