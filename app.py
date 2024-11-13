@@ -1,9 +1,9 @@
-from flask import Flask, render_template, url_for, redirect, request, session
+from flask import Flask, render_template, url_for, redirect, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Length, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
+from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
 from flask_bcrypt import Bcrypt
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
@@ -25,7 +25,7 @@ login_manager.login_view = "login"
 client_id = '0985d3da19014f2588b78ccd7d172db0'
 client_secret = 'a73d7992813e4ffab54fc1b719944dca'
 redirect_uri = 'http://localhost:5000/callback'
-scope = 'playlist-read-private, playlist-modify-public'
+scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
 
 cache_handler = FlaskSessionCacheHandler(session)
 
@@ -79,7 +79,13 @@ class LoginForm(FlaskForm):
     password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Password"})
     # Button to register
     submit = SubmitField("Login")
-
+    
+#New Play List Form, from FlaskForm
+class NewPlaylist(FlaskForm):
+    name = StringField('Playlist Name', validators=[DataRequired()])  # Renamed to 'name'
+    public_check = BooleanField('Public?')
+    description = TextAreaField('Description')
+    submit = SubmitField('Create Playlist')
 
     
 # comment out after creating tables
@@ -139,15 +145,46 @@ def callback():
 #spotipy access playlists
 @app.route('/get_playlists')
 def get_playlists():
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()): #if not logged in in spotify
-        auth_url = sp_oauth.get_authorized_url() #sign in through spotify
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()): # if not logged in in Spotify
+        auth_url = sp_oauth.get_authorized_url() # sign in through Spotify
         return redirect(auth_url)
-    
+
     playlists = sp.current_user_playlists()
     playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
-    playlists_html = '<br>'.join(f'{name}: {url}' for name, url in playlists_info)
+    playlists_html = '<br>'.join(f'{name}: <a href="{url}" target="_blank">{url}</a>' for name, url in playlists_info)
     
-    return playlists_html
+    create_playlist_button = '<br><br><a href="' + url_for('create_playlist') + '"><button>Create A New Playlist</button></a>'
+    return playlists_html + create_playlist_button
+
+
+@app.route('/create_playlists', methods=['GET', 'POST'])
+def create_playlist():
+    # Check if user is authenticated with Spotify
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        auth_url = sp_oauth.get_authorize_url()  # Redirect to Spotify login
+        return redirect(auth_url)
+    
+    form = NewPlaylist()
+    # If form is submitted and valid, process playlist creation
+    if form.validate_on_submit():
+        user_id = sp.current_user()['id']
+        playlist_name = form.name.data
+        playlist_public = form.public_check.data
+        playlist_description = form.description.data
+        
+        # Create playlist
+        new_list = sp.user_playlist_create(
+            user = user_id, 
+            name = playlist_name, 
+            public = playlist_public, 
+            collaborative = False, 
+            description = playlist_description
+        )
+
+        flash('New playlist created successfully!', 'success')
+        return redirect(url_for('get_playlists'))
+    
+    return render_template('new_playlist.html', form=form)
 
 @app.route('/logout', methods = ['GET', 'POST'])
 @login_required

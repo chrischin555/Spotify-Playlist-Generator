@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create New Playlist</title>
+</head>
+<body>
+    <h2>Create a New Playlist</h2>
+    <form method="POST" action="{{ url_for('create_playlist') }}">
+        {{ form.hidden_tag() }}
+        
+        <div>
+            {{ form.name.label }} {{ form.name(size=32) }}
+        </div>
+        <div>
+            {{ form.public_check.label }} {{ form.public_check() }}
+        </div>
+        <div>
+            {{ form.description.label }} {{ form.description(size=64) }}
+        </div>
+        
+        <button type="submit">{{ form.submit.label }}</button>
+    </form>
+</body>
+</html>
