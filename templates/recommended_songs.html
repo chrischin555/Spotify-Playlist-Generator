@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>recommended_songs</title>
+    <script>
+        function outputUpdate(numSongs){
+            document.querySelector('#selected-number-of-songs').value = numSongs;
+        }
+        function resetSliderPosition(){
+            const slider = document.querySelector('[name="numSongs"]')
+            slider.value = 1;
+            outputUpdate(1);
+        }
+        window.onload = function(){
+            resetSliderPosition();
+        }
+    </script>
 </head>
 <body>
     {% if nameOfGame %}
@@ -27,6 +40,11 @@
             <div>
                 {{ form.nameOfGame.label }} {{ form.nameOfGame() }}
             </div>
+            <p>
+                {{ form.numSongs.label }}
+                {{ form.numSongs(min = 1, max = 100, oninput="outputUpdate(value)") }}
+                <output for = "numSongs" id = "selected-number-of-songs"> {{ form.numSongs.data }}</output>
+            </p>
             <div>
                 {{ form.submit }}
             </div>

@@ -138,7 +138,7 @@ class SpotifySongSearch:
         genresArray = recommendations_seed['genres']
         return genresArray
 
-    def getRecommendedSongs(self, artistName, genre):
+    def getRecommendedSongs(self, artistName, genre, numSongs):
         recommended = []
         recommendedSongs = []
         recommendedArtist = self.getArtistID(artistName)
@@ -146,7 +146,7 @@ class SpotifySongSearch:
 
         recommendedGenre = genre[:2]
 
-        recommendations = spotify.recommendations([recommendedArtist], [recommendedGenre], recommendedArtistSongIDs, limit = 20)
+        recommendations = spotify.recommendations([recommendedArtist], [recommendedGenre], recommendedArtistSongIDs, limit = numSongs)
         recommended.extend(recommendations['tracks'])
 
         for track in recommendations['tracks']:

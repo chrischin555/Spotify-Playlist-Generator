@@ -137,17 +137,20 @@ def recommend_songs():
     form = RecommendSongs()
     GPTResponse = None
     recommendedSongs = []
+    numSongs = 0
 
     # Validations
     if form.validate_on_submit():
         nameOfGame = form.nameOfGame.data
+        numSongs = form.numSongs.data
         form.nameOfGame.data = ''
         song_search = SpotifySongSearch()
         GPTResponse = song_search.chat_with_GPT(nameOfGame)
         artistName = json.loads(GPTResponse.function_call.arguments).get("artistName")
         genre = json.loads(GPTResponse.function_call.arguments).get("genre")
-        recommendedSongs = song_search.getRecommendedSongs(artistName, genre)
-    return render_template('recommended_songs.html', nameOfGame = nameOfGame, form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs)
+        recommendedSongs = song_search.getRecommendedSongs(artistName, genre, numSongs)
+    return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
+                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, numSongs = numSongs)
 
 if __name__ == '__main__':
     app.run(debug=True)
