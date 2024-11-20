@@ -21,7 +21,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-#Spotipy variables, stopify dev info + sp_oauth
+#Spotipy variables, spotify dev info + sp_oauth
 client_id = '0985d3da19014f2588b78ccd7d172db0'
 client_secret = 'a73d7992813e4ffab54fc1b719944dca'
 redirect_uri = 'http://localhost:5000/callback'
