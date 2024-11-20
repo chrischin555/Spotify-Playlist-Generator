@@ -1,4 +1,5 @@
-<<<<<<< HEAD
+import json
+import openai
 from flask import Flask, render_template, url_for, redirect, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
@@ -9,20 +10,9 @@ from flask_bcrypt import Bcrypt
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-=======
-import json
-from flask import Flask, render_template, url_for, redirect
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
-from flask_bcrypt import Bcrypt
 from song_search import SpotifySongSearch
 from song_search_form import SongSearchForm
 from recommend_songs import RecommendSongs
-import openai
->>>>>>> origin/search_for_song
 
 app = Flask(__name__)
 # create database instance, connect app file to database
@@ -122,16 +112,15 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
-                #For logging into Spotify
-                if not sp_oauth.validate_token(cache_handler.get_cached_token()): #if not logged in in spotify
-                    auth_url = sp_oauth.get_authorize_url() #sign in through spotify
-                    return redirect(auth_url)
-                return redirect(url_for('dashboard'))
     return render_template('login.html', form=form) # Create form variable in HTML template
 
 @app.route('/dashboard', methods = ['GET', 'POST'])
 @login_required
 def dashboard():
+    #For logging into Spotify
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()): #if not logged in in spotify
+        auth_url = sp_oauth.get_authorize_url() #sign in through spotify
+        return redirect(auth_url)
     return render_template('dashboard.html')
 
 @app.route('/register', methods = ['GET', 'POST'])
@@ -151,7 +140,6 @@ def register():
     
     return render_template('register.html', form=form)
 
-<<<<<<< HEAD
 #spotify token refresh
 @app.route('/callback')
 def callback():
@@ -202,13 +190,6 @@ def create_playlist():
     
     return render_template('new_playlist.html', form=form)
 
-@app.route('/logout', methods = ['GET', 'POST'])
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-=======
 # test route, remove later because i just used this for testing
 @app.route('/song_search', methods = ['GET', 'POST'])
 def song_search():
@@ -247,7 +228,13 @@ def recommend_songs():
     return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
                            form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
                            numSongs = numSongs, songPreviews = songPreviews)
->>>>>>> origin/search_for_song
+
+@app.route('/logout', methods = ['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
