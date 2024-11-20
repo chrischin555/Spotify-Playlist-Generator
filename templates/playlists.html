@@ -3,18 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <nav class="navbar">
-        <ul>
-            <li><p>Game-Play</p></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="">Playlists</a></li>
-            <li><a href="#">Account</a></li>
-        </ul>
-    </nav>
+    <title>Playlists</title>
+    <div class="topnav">
+        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('get_playlists') }}">Playlists</a>
+        <a href="{{url_for('recommend_songs')}}">Song Recs</a>
+        <a href="#">Account</a>
+      </div> 
 </head>
 <body>
-    <h1>Temporary playlist page</h1>
-    <a href="{{url_for('logout')}}">Logout</a> <!--link that routes to login page after logging out -->
+    <h1>Your Playlists</h1>
+    <form method="POST" action="/select_playlist">
+        <label for="playlist">Choose a playlist:</label>
+        <select name="playlist_id" id="playlist">
+            {% for name, playlist_id in playlists %}
+                <option value="{{ playlist_id }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Select</button>
+    </form>
+    <button type = button> <a href="{{ url_for('create_playlist') }}">Create A New Playlist</a> </button>
 </body>
 </html>

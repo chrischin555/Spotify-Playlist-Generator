@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Create New Playlist</title>
+    <title>New Playlist</title>
+    <div class="topnav">
+        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('get_playlists') }}">Playlists</a>
+        <a href="{{url_for('recommend_songs')}}">Song Recs</a>
+        <a href="#">Account</a>
+      </div> 
 </head>
 <body>
     <h2>Create a New Playlist</h2>

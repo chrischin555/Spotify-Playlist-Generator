@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>home</title>
+    <div class="topnav">
+        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('get_playlists') }}">Playlists</a>
+        <a href="{{url_for('recommend_songs')}}">Song Recs</a>
+        <a href="#">Account</a>
+      </div> 
 </head>
 <body>
     <h1>Home Page Test</h1>

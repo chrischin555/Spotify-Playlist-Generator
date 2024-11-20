@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>recommended_songs</title>
+    <div class="topnav">
+        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('get_playlists') }}">Playlists</a>
+        <a href="{{url_for('recommend_songs')}}">Song Recs</a>
+        <a href="#">Account</a>
+      </div> 
     <script>
         function outputUpdate(numSongs){
             document.querySelector('#selected-number-of-songs').value = numSongs;
@@ -33,9 +39,18 @@
                         {% else %}
                             <span>No song preview available</span>
                         {% endif %}
+                        <form method="POST" action="{{ url_for('add_to_playlist') }}">
+                            <label for="playlist_{{ loop.index }}">Choose a playlist:</label>
+                            <select name="playlist_id" id="playlist_{{ loop.index }}">
+                                {% for name, playlist_id in playlists %}
+                                    <option value="{{ playlist_id }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit">Add to Playlist</button>
+                        </form>
                     </li>
                 {% endfor %}
-            </ul>
+            </ul>            
         {% else %}
             <p>Unable to generate recommended songs</p>
         {% endif %}
@@ -49,8 +64,8 @@
             </div>
             <p>
                 {{ form.numSongs.label }}
-                {{ form.numSongs(min = 1, max = 20, oninput="outputUpdate(value)") }}
-                <output for = "numSongs" id = "selected-number-of-songs"> {{ form.numSongs.data }}</output>
+                {{ form.numSongs(min=1, max=20, oninput="outputUpdate(value)") }}
+                <output for="numSongs" id="selected-number-of-songs">{{ form.numSongs.data }}</output>
             </p>
             <div>
                 {{ form.submit }}
@@ -58,4 +73,5 @@
         </form>
     {% endif %}
 </body>
+
 </html>

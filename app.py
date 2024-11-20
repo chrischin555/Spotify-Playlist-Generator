@@ -1,5 +1,4 @@
 import json
-import openai
 from flask import Flask, render_template, url_for, redirect, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
@@ -49,9 +48,6 @@ sp = Spotify(auth_manager = sp_oauth)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-
-
 # table for database with the three columns
 # username, password have a max of 20 characters & 
 # 80 characters respectively & cannot be null
@@ -112,6 +108,7 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
+                return redirect(url_for('dashboard'))
     return render_template('login.html', form=form) # Create form variable in HTML template
 
 @app.route('/dashboard', methods = ['GET', 'POST'])
@@ -149,23 +146,22 @@ def callback():
 #spotipy access playlists
 @app.route('/get_playlists')
 def get_playlists():
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()): # if not logged in in Spotify
-        auth_url = sp_oauth.get_authorized_url() # sign in through Spotify
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):  # if not logged in in Spotify
+        auth_url = sp_oauth.get_authorize_url()  # sign in through Spotify
         return redirect(auth_url)
 
     playlists = sp.current_user_playlists()
-    playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
-    playlists_html = '<br>'.join(f'{name}: <a href="{url}" target="_blank">{url}</a>' for name, url in playlists_info)
+    playlists_info = [(pl['name'], pl['id']) for pl in playlists['items']]
     
-    create_playlist_button = '<br><br><a href="' + url_for('create_playlist') + '"><button>Create A New Playlist</button></a>'
-    return playlists_html + create_playlist_button
+    return render_template('playlists.html', playlists=playlists_info)
+
 
 
 @app.route('/create_playlists', methods=['GET', 'POST'])
 def create_playlist():
     # Check if user is authenticated with Spotify
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        auth_url = sp_oauth.get_authorize_url()  # Redirect to Spotify login
+        auth_url = sp_oauth.get_authorized_url()  # Redirect to Spotify login
         return redirect(auth_url)
     
     form = NewPlaylist()
@@ -190,22 +186,21 @@ def create_playlist():
     
     return render_template('new_playlist.html', form=form)
 
-# test route, remove later because i just used this for testing
-@app.route('/song_search', methods = ['GET', 'POST'])
-def song_search():
-    artistName = None
-    form = SongSearchForm()
-    songs = []
 
-    # Validations
-    if form.validate_on_submit():
-        artistName = form.artistName.data
-        form.artistName.data = ''
-        song_search = SpotifySongSearch()
-        songs = song_search.getArtistSongs(artistName)
-    return render_template('song_search.html', artistName = artistName, form = form, songs = songs)
+@app.route('/add_to_playlist', methods=['POST'])
+def add_to_playlist():
+    playlist_id = request.form.get('playlist_id') 
+    song_uri = 
+    if playlist_id and song_uri:
+        sp.playlist_add_items(playlist_id, [song_uri])
+        flash(f"Successfully added the song to the playlist!", 'success')
+    else:
+        flash("No playlist or song selected!", 'warning')
 
-@app.route('/recommend_songs', methods = ['GET', 'POST'])
+    return redirect(url_for('recommend_songs'))
+
+
+@app.route('/recommend_songs', methods=['GET', 'POST'])
 def recommend_songs():
     nameOfGame = None
     form = RecommendSongs()
@@ -213,9 +208,17 @@ def recommend_songs():
     recommendedSongs = []
     numSongs = 0
     songPreviews = None
+    playlists_info = []  # Initialize playlists_info to avoid UnboundLocalError
 
-    # Validations
     if form.validate_on_submit():
+        # To get playlists again
+        if not sp_oauth.validate_token(cache_handler.get_cached_token()):  # if not logged in in Spotify
+            auth_url = sp_oauth.get_authorize_url()  # sign in through Spotify
+            return redirect(auth_url)
+
+        playlists = sp.current_user_playlists()
+        playlists_info = [(pl['name'], pl['id']) for pl in playlists['items']]
+
         nameOfGame = form.nameOfGame.data
         numSongs = form.numSongs.data
         form.nameOfGame.data = ''
@@ -225,9 +228,19 @@ def recommend_songs():
         genre = json.loads(GPTResponse.function_call.arguments).get("genre")
         recommendedSongs = song_search.getRecommendedSongs(artistName, genre, numSongs)
         songPreviews = [song['preview_url'] for song in recommendedSongs if song['preview_url']]
-    return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
-                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
-                           numSongs = numSongs, songPreviews = songPreviews)
+
+    return render_template(
+        'recommended_songs.html',
+        nameOfGame=nameOfGame,
+        form=form,
+        GPTResponse=GPTResponse,
+        recommendedSongs=recommendedSongs,
+        numSongs=numSongs,
+        songPreviews=songPreviews,
+        playlists=playlists_info 
+    )
+
+
 
 @app.route('/logout', methods = ['GET', 'POST'])
 @login_required
