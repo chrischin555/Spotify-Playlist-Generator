@@ -150,9 +150,11 @@ class SpotifySongSearch:
         recommended.extend(recommendations['tracks'])
 
         for track in recommendations['tracks']:
-            recommendedSong = track['name']
-            recommendedSongArtist = track['artists'][0]['name']
-            recommendedSongs.append(f"{recommendedSong} by {recommendedSongArtist}")
+            recommendedSongs.append({
+                "name": track['name'],
+                "artist": track['artists'][0]['name'],
+                "preview_url": track['preview_url']
+            })
 
         return recommendedSongs
     

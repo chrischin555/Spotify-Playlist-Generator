@@ -138,6 +138,7 @@ def recommend_songs():
     GPTResponse = None
     recommendedSongs = []
     numSongs = 0
+    songPreviews = None
 
     # Validations
     if form.validate_on_submit():
@@ -149,8 +150,10 @@ def recommend_songs():
         artistName = json.loads(GPTResponse.function_call.arguments).get("artistName")
         genre = json.loads(GPTResponse.function_call.arguments).get("genre")
         recommendedSongs = song_search.getRecommendedSongs(artistName, genre, numSongs)
+        songPreviews = [song['preview_url'] for song in recommendedSongs if song['preview_url']]
     return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
-                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, numSongs = numSongs)
+                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
+                           numSongs = numSongs, songPreviews = songPreviews)
 
 if __name__ == '__main__':
     app.run(debug=True)

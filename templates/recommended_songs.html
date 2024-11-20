@@ -25,12 +25,19 @@
         {% if recommendedSongs %}
             <h2>Recommended Tracks:</h2>
             <ul>
-                {% for recommended in recommendedSongs %}
-                    <li>{{ recommended }}</li>
+                {% for song in recommendedSongs %}
+                    <li>
+                        {{ song.name }} by {{ song.artist }}
+                        {% if song.preview_url %}
+                            <a href="{{ song.preview_url }}" target="_blank">Play song preview</a>
+                        {% else %}
+                            <span>No song preview available</span>
+                        {% endif %}
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p>Some error or something</p>
+            <p>Unable to generate recommended songs</p>
         {% endif %}
     {% else %}
         <h1>Get new song recommendations</h1>
@@ -42,7 +49,7 @@
             </div>
             <p>
                 {{ form.numSongs.label }}
-                {{ form.numSongs(min = 1, max = 100, oninput="outputUpdate(value)") }}
+                {{ form.numSongs(min = 1, max = 20, oninput="outputUpdate(value)") }}
                 <output for = "numSongs" id = "selected-number-of-songs"> {{ form.numSongs.data }}</output>
             </p>
             <div>
