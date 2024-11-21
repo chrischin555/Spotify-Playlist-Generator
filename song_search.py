@@ -107,18 +107,6 @@ class SpotifySongSearch:
         for album in albums:
             albumIDs.append(album['id'])
         return albumIDs
-    
-    def searchForTrackURI(self, trackName):
-        results = spotify.search(q=trackName, type='track', limit=1)
-        items = results['tracks']['items']
-
-        if len(items) > 0:
-            trackURI = items[0]['uri']
-            return trackURI
-    
-        else:
-            print("No track URI available")
-            return None
 
     def getArtistSongs(self, artistName):
         allArtistAlbumIDs = self.getArtistAlbumID(artistName)
@@ -144,7 +132,6 @@ class SpotifySongSearch:
         #     print('Track ID: ', trackID)
             
         return allArtistTrackIDs
-    
 
     def getRecommendedGenres():
         recommendations_seed = spotify.recommendation_genre_seeds()
@@ -166,9 +153,9 @@ class SpotifySongSearch:
             recommendedSongs.append({
                 "name": track['name'],
                 "artist": track['artists'][0]['name'],
-                "preview_url": track['preview_url'],
-                "song_URI": track['uri']
+                "preview_url": track['preview_url']
             })
+
         return recommendedSongs
     
     def chat_with_GPT(self, prompt):

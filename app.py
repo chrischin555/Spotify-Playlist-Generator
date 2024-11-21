@@ -1,19 +1,28 @@
-import json
-import os
+<<<<<<< HEAD
 from flask import Flask, render_template, url_for, redirect, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-import urllib
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
 from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
 from flask_bcrypt import Bcrypt
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
+=======
+import json
+from flask import Flask, render_template, url_for, redirect
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
+from flask_bcrypt import Bcrypt
 from song_search import SpotifySongSearch
+from song_search_form import SongSearchForm
 from recommend_songs import RecommendSongs
-from urllib.parse import quote
+import openai
+>>>>>>> origin/search_for_song
 
 app = Flask(__name__)
 # create database instance, connect app file to database
@@ -28,8 +37,8 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 #Spotipy variables, spotify dev info + sp_oauth
-client_id = os.environ['CLIENT_ID']
-client_secret = os.environ['CLIENT_SECRET']
+client_id = '0985d3da19014f2588b78ccd7d172db0'
+client_secret = 'a73d7992813e4ffab54fc1b719944dca'
 redirect_uri = 'http://localhost:5000/callback'
 scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
 
@@ -50,6 +59,7 @@ sp = Spotify(auth_manager = sp_oauth)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 
 # table for database with the three columns
@@ -119,12 +129,6 @@ def login():
                 return redirect(url_for('dashboard'))
     return render_template('login.html', form=form) # Create form variable in HTML template
 
-@app.route('/logout', methods = ['GET', 'POST'])
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
 @app.route('/dashboard', methods = ['GET', 'POST'])
 @login_required
 def dashboard():
@@ -147,54 +151,8 @@ def register():
     
     return render_template('register.html', form=form)
 
-@app.route('/recommend_songs', methods = ['GET', 'POST'])
-@login_required
-def recommend_songs():
-    nameOfGame = None
-    form = RecommendSongs()
-    GPTResponse = None
-    numSongs = 0
-    songPreviews = None
-    global recommendedSongs
-    recommendedSongs = []
-    global song_name
-    global song_URI
-    global encoded_song_URI
-
-    # Validations
-    if form.validate_on_submit():
-        nameOfGame = form.nameOfGame.data
-        numSongs = form.numSongs.data
-        form.nameOfGame.data = ''
-        song_search = SpotifySongSearch()
-        GPTResponse = song_search.chat_with_GPT(nameOfGame)
-        artistName = json.loads(GPTResponse.function_call.arguments).get("artistName")
-        genre = json.loads(GPTResponse.function_call.arguments).get("genre")
-        recommendedSongs = song_search.getRecommendedSongs(artistName, genre, numSongs)
-        songPreviews = [song['preview_url'] for song in recommendedSongs if song['preview_url']]
-
-        song_URI = song_search.searchForTrackURI(song['name'] for song in recommendedSongs if song['name'])
-        encoded_song_URI = urllib.parse.quote(song_URI)
-
-        for song in recommendedSongs:
-            if song['name']:
-                song_name = song['name']
-                song_URI = song['song_URI']   
-
-    return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
-                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
-                           numSongs = numSongs, songPreviews = songPreviews)
-
-@app.route('/song/<song_name>')
-@login_required
-def song_details(song_name):
-    song_search = SpotifySongSearch()
-    song_URI = song_search.searchForTrackURI(song_name)
-    # encoded_song_URI = urllib.parse.quote(song_URI)
-    # print(encoded_song_URI)
-
-    return render_template('recommended_song_details.html', song_name = song_name, song_URI = song_URI)
-
+<<<<<<< HEAD
+#spotify token refresh
 @app.route('/callback')
 def callback():
     sp_oauth.get_access_token(request.args['code']) #refreshes the spotify token (?)
@@ -244,10 +202,54 @@ def create_playlist():
     
     return render_template('new_playlist.html', form=form)
 
-if __name__ == '__main__':
-    # auth_url = sp_oauth.get_authorize_url()
-    # print(f"Spotify Auth URL: {auth_url}")
+@app.route('/logout', methods = ['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
+=======
+# test route, remove later because i just used this for testing
+@app.route('/song_search', methods = ['GET', 'POST'])
+def song_search():
+    artistName = None
+    form = SongSearchForm()
+    songs = []
+
+    # Validations
+    if form.validate_on_submit():
+        artistName = form.artistName.data
+        form.artistName.data = ''
+        song_search = SpotifySongSearch()
+        songs = song_search.getArtistSongs(artistName)
+    return render_template('song_search.html', artistName = artistName, form = form, songs = songs)
+
+@app.route('/recommend_songs', methods = ['GET', 'POST'])
+def recommend_songs():
+    nameOfGame = None
+    form = RecommendSongs()
+    GPTResponse = None
+    recommendedSongs = []
+    numSongs = 0
+    songPreviews = None
+
+    # Validations
+    if form.validate_on_submit():
+        nameOfGame = form.nameOfGame.data
+        numSongs = form.numSongs.data
+        form.nameOfGame.data = ''
+        song_search = SpotifySongSearch()
+        GPTResponse = song_search.chat_with_GPT(nameOfGame)
+        artistName = json.loads(GPTResponse.function_call.arguments).get("artistName")
+        genre = json.loads(GPTResponse.function_call.arguments).get("genre")
+        recommendedSongs = song_search.getRecommendedSongs(artistName, genre, numSongs)
+        songPreviews = [song['preview_url'] for song in recommendedSongs if song['preview_url']]
+    return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
+                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
+                           numSongs = numSongs, songPreviews = songPreviews)
+>>>>>>> origin/search_for_song
+
+if __name__ == '__main__':
     app.run(debug=True)
 
 

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>song_search</title>
+</head>
+<body>
+    {% if artistName %}
+        <h1>Artist Name: {{ artistName }}</h1>
+        {% if songs %}
+            <h2>Tracks:</h2>
+            <ul>
+                {% for song in songs %}
+                    <li>{{ song }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No songs found for this artist.</p>
+        {% endif %}
+    {% else %}
+        <h1>Search For An Artist's Songs</h1>
+        <br>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div>
+                {{ form.artistName.label }} {{ form.artistName() }}
+            </div>
+            <div>
+                {{ form.submit }}
+            </div>
+        </form>
+    {% endif %}
+</body>
+</html>
