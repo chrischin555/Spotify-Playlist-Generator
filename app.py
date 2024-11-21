@@ -1,4 +1,5 @@
-<<<<<<< HEAD
+import json
+import os
 from flask import Flask, render_template, url_for, redirect, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
@@ -9,20 +10,8 @@ from flask_bcrypt import Bcrypt
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-=======
-import json
-from flask import Flask, render_template, url_for, redirect
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
-from flask_bcrypt import Bcrypt
-from song_search import SpotifySongSearch
-from song_search_form import SongSearchForm
 from recommend_songs import RecommendSongs
-import openai
->>>>>>> origin/search_for_song
+from song_search import SpotifySongSearch
 
 app = Flask(__name__)
 # create database instance, connect app file to database
@@ -37,8 +26,8 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 #Spotipy variables, spotify dev info + sp_oauth
-client_id = '0985d3da19014f2588b78ccd7d172db0'
-client_secret = 'a73d7992813e4ffab54fc1b719944dca'
+client_id = os.getenv('CLIENT_ID')
+client_secret = os.getenv('CLIENT_SECRET')
 redirect_uri = 'http://localhost:5000/callback'
 scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
 
@@ -151,7 +140,6 @@ def register():
     
     return render_template('register.html', form=form)
 
-<<<<<<< HEAD
 #spotify token refresh
 @app.route('/callback')
 def callback():
@@ -208,30 +196,18 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-=======
-# test route, remove later because i just used this for testing
-@app.route('/song_search', methods = ['GET', 'POST'])
-def song_search():
-    artistName = None
-    form = SongSearchForm()
-    songs = []
-
-    # Validations
-    if form.validate_on_submit():
-        artistName = form.artistName.data
-        form.artistName.data = ''
-        song_search = SpotifySongSearch()
-        songs = song_search.getArtistSongs(artistName)
-    return render_template('song_search.html', artistName = artistName, form = form, songs = songs)
 
 @app.route('/recommend_songs', methods = ['GET', 'POST'])
 def recommend_songs():
     nameOfGame = None
     form = RecommendSongs()
     GPTResponse = None
+    global recommendedSongs
     recommendedSongs = []
     numSongs = 0
     songPreviews = None
+    global song_name
+    global song_URI
 
     # Validations
     if form.validate_on_submit():
@@ -244,10 +220,26 @@ def recommend_songs():
         genre = json.loads(GPTResponse.function_call.arguments).get("genre")
         recommendedSongs = song_search.getRecommendedSongs(artistName, genre, numSongs)
         songPreviews = [song['preview_url'] for song in recommendedSongs if song['preview_url']]
+
+        for song in recommendedSongs:
+            song_name = song['name']
+            song_URI = song['song_URI']
+
     return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
                            form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
                            numSongs = numSongs, songPreviews = songPreviews)
->>>>>>> origin/search_for_song
+
+@app.route('/songs/<song_name>')
+@login_required
+def song_details(song_name):
+    song_search = SpotifySongSearch()
+    song_URI = song_search.searchForTrackURI(song_name)
+    # recommendedSongsJSON = json.dumps(recommendedSongsArray)
+
+    # encoded_song_URI = urllib.parse.quote(song_URI)
+    # print(encoded_song_URI)
+
+    return render_template('recommended_song_details.html', song_name = song_name, song_URI = song_URI)
 
 if __name__ == '__main__':
     app.run(debug=True)

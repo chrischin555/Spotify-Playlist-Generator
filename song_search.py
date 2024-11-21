@@ -68,6 +68,17 @@ class SpotifySongSearch:
         else:
             print("No artists with that name...")
             return None
+    def searchForTrackURI(self, trackName):
+        results = spotify.search(q=trackName, type='track', limit=1)
+        items = results['tracks']['items']
+
+        if len(items) > 0:
+            trackURI = items[0]['uri']
+            return trackURI
+    
+        else:
+            print("No track URI available")
+            return None
     
     def getArtistID(self, artistName):
         results = spotify.search(q=artistName, type='artist')
@@ -153,7 +164,8 @@ class SpotifySongSearch:
             recommendedSongs.append({
                 "name": track['name'],
                 "artist": track['artists'][0]['name'],
-                "preview_url": track['preview_url']
+                "preview_url": track['preview_url'],
+                "song_URI": track['uri']
             })
 
         return recommendedSongs

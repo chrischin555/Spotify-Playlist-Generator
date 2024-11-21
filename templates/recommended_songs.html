@@ -27,12 +27,8 @@
             <ul>
                 {% for song in recommendedSongs %}
                     <li>
-                        {{ song.name }} by {{ song.artist }}
-                        {% if song.preview_url %}
-                            <a href="{{ song.preview_url }}" target="_blank">Play song preview</a>
-                        {% else %}
-                            <span>No song preview available</span>
-                        {% endif %}
+                        <a href="{{ url_for('song_details', song_name = song.name, song_URI=song.song_URI|urlencode) }}">
+                            {{ song.name }} by {{ song.artist }}</a>
                     </li>
                 {% endfor %}
             </ul>
