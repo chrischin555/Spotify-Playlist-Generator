@@ -1,61 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>recommended_songs</title>
     <script>
-        function outputUpdate(numSongs){
+        function outputUpdate(numSongs) {
             document.querySelector('#selected-number-of-songs').value = numSongs;
         }
-        function resetSliderPosition(){
+
+        function resetSliderPosition() {
             const slider = document.querySelector('[name="numSongs"]')
             slider.value = 1;
             outputUpdate(1);
         }
-        window.onload = function(){
+        window.onload = function () {
             resetSliderPosition();
         }
+
     </script>
 </head>
+
 <body>
     {% if nameOfGame %}
-        <h1>Recommended Songs</h1>
-        <p>{{ GPTResponse }}</p>
-        {% if recommendedSongs %}
-            <h2>Recommended Tracks:</h2>
-            <ul>
-                {% for song in recommendedSongs %}
-                    <li>
-                        {{ song.name }} by {{ song.artist }}
-                        {% if song.preview_url %}
-                            <a href="{{ song.preview_url }}" target="_blank">Play song preview</a>
-                        {% else %}
-                            <span>No song preview available</span>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>Unable to generate recommended songs</p>
-        {% endif %}
+    <h1>Recommended Songs</h1>
+    <p>{{ GPTResponse }}</p>
+    {% if recommendedSongs %}
+    <h2>Recommended Tracks:</h2>
+    <ul>
+        {% for song in recommendedSongs %}
+        <li>
+            <a href="{{ url_for('song_details', song_name=song.name) }}">{{ song.name }} by {{ song.artist }}</a>
+            {% if song.preview_url %}
+            <br>
+            <!-- <audio controls = "controls">
+                <source src = "{{ song.preview_url }}" type = "audio/mpeg"/>
+            </audio> -->
+            {% else %}
+            <span>No song preview available</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
     {% else %}
-        <h1>Get new song recommendations</h1>
-        <br>
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
-            <div>
-                {{ form.nameOfGame.label }} {{ form.nameOfGame() }}
-            </div>
-            <p>
-                {{ form.numSongs.label }}
-                {{ form.numSongs(min = 1, max = 20, oninput="outputUpdate(value)") }}
-                <output for = "numSongs" id = "selected-number-of-songs"> {{ form.numSongs.data }}</output>
-            </p>
-            <div>
-                {{ form.submit }}
-            </div>
-        </form>
+    <p>Unable to generate recommended songs</p>
+    {% endif %}
+    {% else %}
+    <h1>Get new song recommendations</h1>
+    <br>
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.nameOfGame.label }} {{ form.nameOfGame() }}
+        </div>
+        <p>
+            {{ form.numSongs.label }}
+            {{ form.numSongs(min = 1, max = 20, oninput="outputUpdate(value)") }}
+            <output for="numSongs" id="selected-number-of-songs"> {{ form.numSongs.data }}</output>
+        </p>
+        <div>
+            {{ form.submit }}
+        </div>
+    </form>
     {% endif %}
 </body>
+
 </html>
