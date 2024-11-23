@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>recommended_songs</title>
+    <title>Recommended Songs</title>
     <div class="topnav">
         <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('get_playlists') }}">Playlists</a>
-        <a href="{{url_for('recommend_songs')}}">Song Recs</a>
+        <a href="{{ url_for('recommend_songs') }}">Song Recs</a>
         <a href="#">Account</a>
-      </div> 
-    <script>
-        function outputUpdate(numSongs){
-            document.querySelector('#selected-number-of-songs').value = numSongs;
-        }
-        function resetSliderPosition(){
-            const slider = document.querySelector('[name="numSongs"]')
-            slider.value = 1;
-            outputUpdate(1);
-        }
-        window.onload = function(){
-            resetSliderPosition();
-        }
-    </script>
+    </div>
 </head>
+<script>
+    function outputUpdate(numSongs){
+        document.querySelector('#selected-number-of-songs').value = numSongs;
+    }
+    function resetSliderPosition(){
+        const slider = document.querySelector('[name="numSongs"]')
+        slider.value = 1;
+        outputUpdate(1);
+    }
+    window.onload = function(){
+        resetSliderPosition();
+    }
+</script>
 <body>
     {% if nameOfGame %}
         <h1>Recommended Songs</h1>
@@ -46,6 +46,7 @@
                                     <option value="{{ playlist_id }}">{{ name }}</option>
                                 {% endfor %}
                             </select>
+                            <input type="hidden" name="song_url" value="{{ song.spotify_url }}">
                             <button type="submit">Add to Playlist</button>
                         </form>
                     </li>
@@ -56,7 +57,6 @@
         {% endif %}
     {% else %}
         <h1>Get new song recommendations</h1>
-        <br>
         <form method="POST" action="">
             {{ form.hidden_tag() }}
             <div>
@@ -73,5 +73,4 @@
         </form>
     {% endif %}
 </body>
-
 </html>

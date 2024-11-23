@@ -153,7 +153,8 @@ class SpotifySongSearch:
             recommendedSongs.append({
                 "name": track['name'],
                 "artist": track['artists'][0]['name'],
-                "preview_url": track['preview_url']
+                "preview_url": track['preview_url'],
+                "spotify_url": track['external_urls']['spotify']
             })
 
         return recommendedSongs

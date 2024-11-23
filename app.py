@@ -143,17 +143,19 @@ def callback():
     sp_oauth.get_access_token(request.args['code']) #refreshes the spotify token (?)
     return redirect(url_for('dashboard'))
 
-#spotipy access playlists
-@app.route('/get_playlists')
+@app.route('/your_playlists')
 def get_playlists():
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()):  # if not logged in in Spotify
-        auth_url = sp_oauth.get_authorize_url()  # sign in through Spotify
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):  
+        auth_url = sp_oauth.get_authorize_url()  
         return redirect(auth_url)
 
     playlists = sp.current_user_playlists()
-    playlists_info = [(pl['name'], pl['id']) for pl in playlists['items']]
+    playlists_info = [
+        (pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']
+    ]
     
     return render_template('playlists.html', playlists=playlists_info)
+
 
 
 
@@ -190,14 +192,16 @@ def create_playlist():
 @app.route('/add_to_playlist', methods=['POST'])
 def add_to_playlist():
     playlist_id = request.form.get('playlist_id') 
-    song_uri = 
-    if playlist_id and song_uri:
+    song_url = request.form.get('song_url')  # Correct key name
+    if playlist_id and song_url:
+        song_uri = song_url.replace("https://open.spotify.com/track/", "spotify:track:").split("?")[0]
         sp.playlist_add_items(playlist_id, [song_uri])
         flash(f"Successfully added the song to the playlist!", 'success')
     else:
         flash("No playlist or song selected!", 'warning')
 
     return redirect(url_for('recommend_songs'))
+
 
 
 @app.route('/recommend_songs', methods=['GET', 'POST'])
@@ -237,7 +241,7 @@ def recommend_songs():
         recommendedSongs=recommendedSongs,
         numSongs=numSongs,
         songPreviews=songPreviews,
-        playlists=playlists_info 
+        playlists=playlists_info
     )
 
 
