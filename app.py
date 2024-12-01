@@ -234,12 +234,13 @@ def recommend_songs():
 def song_details(song_name):
     song_search = SpotifySongSearch()
     song_URI = song_search.searchForTrackURI(song_name)
+    songDetails = song_search.getSongDetails(song_name)
     # recommendedSongsJSON = json.dumps(recommendedSongsArray)
 
     # encoded_song_URI = urllib.parse.quote(song_URI)
     # print(encoded_song_URI)
 
-    return render_template('recommended_song_details.html', song_name = song_name, song_URI = song_URI)
+    return render_template('recommended_song_details.html', song_name = song_name, song_URI = song_URI, songDetails = songDetails)
 
 if __name__ == '__main__':
     app.run(debug=True)

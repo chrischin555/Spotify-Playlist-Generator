@@ -20,7 +20,6 @@
 
 <body>
     <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-
     <div id="embed-iframe">
         {% for song in recommendedSongs %}
         <script>
@@ -36,6 +35,16 @@
         </script>
         {% endfor %}
     </div>
+    {% for details in songDetails %}
+    <p>
+    Artist: {{ details.artistName }}
+    <br>
+    Song Name: {{ details.songName }}
+    <br>
+    Album Name: {{ details.albumName }}
+    <br>
+    Release Date: {{ details.releaseDate}}
+    </p>
+    {% endfor %}
 </body>
-
 </html>

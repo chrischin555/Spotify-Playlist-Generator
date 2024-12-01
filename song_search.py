@@ -68,6 +68,7 @@ class SpotifySongSearch:
         else:
             print("No artists with that name...")
             return None
+        
     def searchForTrackURI(self, trackName):
         results = spotify.search(q=trackName, type='track', limit=1)
         items = results['tracks']['items']
@@ -169,6 +170,22 @@ class SpotifySongSearch:
             })
 
         return recommendedSongs
+    
+    def getSongDetails(self, trackName):
+        results = spotify.search(q=trackName, type='track')
+        items = results['tracks']['items']
+        songDetails = []
+
+        if len(items) > 0:
+            songDetails.append({
+                "songName": items[0]['name'],
+                "artistName": ", ".join(artist['name'] for artist in items[0]['artists']),  # Iterate over the list
+                "albumName": items[0]['album']['name'],
+                "releaseDate": items[0]['album']['release_date']
+            })
+        else:
+            return None
+        return songDetails
     
     def chat_with_GPT(self, prompt):
         response = openai.chat.completions.create(
