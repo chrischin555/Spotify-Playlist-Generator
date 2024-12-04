@@ -51,7 +51,7 @@ def load_user(user_id):
 
 
 
-# table for database with the three columns
+# table for database with the four columns
 # username, password have a max of 20 characters & 
 # 80 characters respectively & cannot be null
 class User(db.Model, UserMixin):
@@ -145,6 +145,26 @@ def register():
 def callback():
     sp_oauth.get_access_token(request.args['code']) #refreshes the spotify token (?)
     return redirect(url_for('dashboard'))
+
+# account information
+@app.route('/account', methods = ['GET'])
+@login_required
+def account():
+    # Check if the Spotify token is valid
+    if sp_oauth.validate_token(cache_handler.get_cached_token()):
+        # If valid, set isSpotifyConnected to True
+        isSpotifyConnected = True
+
+    else:
+        # If not valid, set isSpotifyConnected to False
+        isSpotifyConnected = False
+
+    return render_template('account.html', current_user = current_user, isSpotifyConnected = isSpotifyConnected)
+
+@app.route('/about')
+@login_required
+def about():
+    return render_template('about.html')
 
 #spotipy access playlists
 @app.route('/get_playlists')
