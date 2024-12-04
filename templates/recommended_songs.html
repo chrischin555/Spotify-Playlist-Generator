@@ -1,57 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>recommended_songs</title>
+    <title>Recommended Songs</title>
     <script>
-        function outputUpdate(numSongs){
+        function outputUpdate(numSongs) {
             document.querySelector('#selected-number-of-songs').value = numSongs;
         }
-        function resetSliderPosition(){
+        function resetSliderPosition() {
             const slider = document.querySelector('[name="numSongs"]')
             slider.value = 1;
             outputUpdate(1);
         }
-        window.onload = function(){
+        window.onload = function () {
             resetSliderPosition();
         }
     </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: lightblue;
+            min-height: 100vh;
+            margin: 0;
+        }
+    </style>
 </head>
+
 <body>
-    {% if nameOfGame %}
-        <h1>Recommended Songs</h1>
-        <p>{{ GPTResponse }}</p>
-        {% if recommendedSongs %}
+    <h1 class = "text-center">Recommended Songs</h1>
+    <div class="container d-flex align-items-center justify-content-center">
+        <div>
+            {% if nameOfGame %}
+            <h1>Recommended Songs</h1>
+            <p>{{ GPTResponse }}</p>
+            {% if recommendedSongs %}
             <h2>Recommended Tracks:</h2>
             <ul>
                 {% for song in recommendedSongs %}
-                    <li>
-                        <a href="{{ url_for('song_details', song_name = song.name, song_URI=song.song_URI|urlencode) }}">
-                            {{ song.name }} by {{ song.artist }}</a>
-                    </li>
+                <li>
+                    <a href="{{ url_for('song_details', song_name = song.name, song_URI=song.song_URI|urlencode) }}">
+                        {{ song.name }} by {{ song.artist }}</a>
+                </li>
                 {% endfor %}
             </ul>
-        {% else %}
+            {% else %}
             <p>Unable to generate recommended songs</p>
-        {% endif %}
-    {% else %}
-        <h1>Get new song recommendations</h1>
-        <br>
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
-            <div>
-                {{ form.nameOfGame.label }} {{ form.nameOfGame() }}
-            </div>
-            <p>
-                {{ form.numSongs.label }}
-                {{ form.numSongs(min = 1, max = 20, oninput="outputUpdate(value)") }}
-                <output for = "numSongs" id = "selected-number-of-songs"> {{ form.numSongs.data }}</output>
-            </p>
-            <div>
-                {{ form.submit }}
-            </div>
-        </form>
-    {% endif %}
+            {% endif %}
+            {% else %}
+            <h1>Get Song Recommendations</h1>
+            <br>
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+                <div>
+                    {{ form.nameOfGame.label (class="form-label") }} {{ form.nameOfGame() }}
+                </div>
+                <p>
+                    {{ form.numSongs.label }}
+                    {{ form.numSongs(min = 1, max = 20, oninput="outputUpdate(value)") }}
+                    <output for="numSongs" id="selected-number-of-songs"> {{ form.numSongs.data }}</output>
+                </p>
+                <div>
+                    {{ form.submit }}
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
 </body>
+
 </html>
