@@ -228,6 +228,7 @@ def recommend_songs():
     songPreviews = None
     global song_name
     global song_URI
+    global artistName
 
     # Validations
     if form.validate_on_submit():
@@ -235,15 +236,21 @@ def recommend_songs():
         numSongs = form.numSongs.data
         form.nameOfGame.data = ''
         song_search = SpotifySongSearch()
-        GPTResponse = song_search.chat_with_GPT(nameOfGame)
-        artistName = json.loads(GPTResponse.function_call.arguments).get("artistName")
-        genre = json.loads(GPTResponse.function_call.arguments).get("genre")
-        recommendedSongs = song_search.getRecommendedSongs(artistName, genre, numSongs)
+        GPTResponse = song_search.chat_with_GPT(nameOfGame, numSongs)
+        artistNames = json.loads(GPTResponse.function_call.arguments).get("artistNames", [])
+
+        for artist in artistNames:
+            recommendedSongs += song_search.getRecommendedSongs(artist, numSongs)
+
         songPreviews = [song['preview_url'] for song in recommendedSongs if song['preview_url']]
 
         for song in recommendedSongs:
             song_name = song['name']
             song_URI = song['song_URI']
+            artistName = song['artist']
+            print("song name:", song_name)
+            print("song URI:", song_URI)
+            print("artist: ", artistName)
 
     return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
                            form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
@@ -254,15 +261,19 @@ def recommend_songs():
 def song_details(song_name):
     song_search = SpotifySongSearch()
     song_URI = song_search.searchForTrackURI(song_name)
+    songArtist = song_search.searchForArtist(artistName)
     songDetails = song_search.getSongDetails(song_name)
     # recommendedSongsJSON = json.dumps(recommendedSongsArray)
 
     # encoded_song_URI = urllib.parse.quote(song_URI)
     # print(encoded_song_URI)
+    for song in songDetails:
+        print(song)
 
     return render_template('recommended_song_details.html', song_name = song_name, song_URI = song_URI, songDetails = songDetails)
 
 if __name__ == '__main__':
+    # song_search = SpotifySongSearch()
+    # print(song_search.getRecommendedSongs("BLACKPINK"))
+    # print(song_search.chat_with_GPT("League of Legends"))
     app.run(debug=True)
-
-

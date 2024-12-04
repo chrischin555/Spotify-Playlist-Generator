@@ -130,7 +130,7 @@ class SpotifySongSearch:
     
         # for track in allArtistTracks:
         #     print('Track: ' + track['name']) 
-        return [track['name'] for track in allArtistTracks]
+        return allArtistTracks
 
     def getArtistSongIDs(self, artistName):
         allArtistAlbumIDs = self.getArtistAlbumID(artistName)
@@ -150,30 +150,30 @@ class SpotifySongSearch:
         genresArray = recommendations_seed['genres']
         return genresArray
 
-    def getRecommendedSongs(self, artistName, genre, numSongs):
-        recommended = []
+    def getRecommendedSongs(self, artistName, numSongs):
         recommendedSongs = []
-        recommendedArtist = self.getArtistID(artistName)
-        recommendedArtistSongIDs = self.getArtistSongIDs(artistName)[:2]
-
-        recommendedGenre = genre[:2]
-
-        recommendations = spotify.recommendations([recommendedArtist], [recommendedGenre], recommendedArtistSongIDs, limit = numSongs)
-        recommended.extend(recommendations['tracks'])
-
-        for track in recommendations['tracks']:
+    
+        # Retrieve all songs by the artist
+        recommendedArtistSongs = self.getArtistSongs(artistName)
+    
+        # Extract and return the name of the song, artist name, preview URL, song URI.
+        for track in recommendedArtistSongs[:numSongs]:
             recommendedSongs.append({
-                "name": track['name'],
-                "artist": track['artists'][0]['name'],
-                "preview_url": track['preview_url'],
-                "song_URI": track['uri']
-            })
+            "name" : track['name'],
+            "artist" : track['artists'][0]['name'],
+            "preview_url": track['preview_url'], 
+            "song_URI": track['uri']
+        })
 
         return recommendedSongs
     
-    def getSongDetails(self, trackName):
+    def getSongDetails(self, trackName, artistName):
         results = spotify.search(q=trackName, type='track')
         items = results['tracks']['items']
+
+        artist_results = spotify.search(q=artistName, type='artist')
+        artist_items = results['artists']['items']
+
         songDetails = []
 
         if len(items) > 0:
@@ -187,17 +187,18 @@ class SpotifySongSearch:
             return None
         return songDetails
     
-    def chat_with_GPT(self, prompt):
+    def chat_with_GPT(self, prompt, numSongs):
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an assistant that recommends songs based on the game's title and genre."
+                    "content": f"""You are an assistant that recommends songs based on the game's title and genre. 
+                    Get different artists for each song. Limit the total number of songs being recommended to { numSongs }"""
                 },
                 {
                     "role": "user",
-                    "content": f"Get recommended songs from different artists that match the vibe based on the given game title {prompt}. Limit the song genre to one and format it in lower case."
+                    "content": f"""Get recommended songs from different artists that match the vibe based on the given game title {prompt}. """
                 }
             ],
             functions=[
@@ -207,16 +208,19 @@ class SpotifySongSearch:
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "artistName": {
-                                "type": "string",
-                                "description": "The name of the recommended arist to go off of. ",
+                            "artistNames": {
+                                "type": "array",
+                                "description": "The name of the recommended artist to go off of. ",
+                                "items": {
+                                    "type": "string"
+                                }
                             },
-                            "genre": {
-                                "type": "string",
-                                "description": "The genre of the recommended arist to go off of.",
-                            },
+                            "numSongs": {
+                                "type": "integer",
+                                "description": "The total number of songs that will be recommended to the user."
+                            }
                         },
-                        "required": ["artistName", "genre"],
+                        "required": ["artistName"]
                     }
                 }
             ],
