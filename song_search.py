@@ -70,7 +70,7 @@ class SpotifySongSearch:
             return None
         
     def searchForTrackURI(self, trackName):
-        results = spotify.search(q=trackName, type='track', limit=1)
+        results = spotify.search(q=trackName, type='track')
         items = results['tracks']['items']
 
         if len(items) > 0:
@@ -156,7 +156,7 @@ class SpotifySongSearch:
         # Retrieve all songs by the artist
         recommendedArtistSongs = self.getArtistSongs(artistName)
     
-        # Extract and return the name of the song, artist name, preview URL, song URI.
+        # Extract and return the name of the song, artist name, preview URL, song URI
         for track in recommendedArtistSongs[:numSongs]:
             recommendedSongs.append({
             "name" : track['name'],
@@ -167,34 +167,31 @@ class SpotifySongSearch:
 
         return recommendedSongs
     
-    def getSongDetails(self, trackName, artistName):
-        results = spotify.search(q=trackName, type='track')
-        items = results['tracks']['items']
-
-        artist_results = spotify.search(q=artistName, type='artist')
-        artist_items = results['artists']['items']
-
+    def getSongDetails(self, songURI):
+        retrieveTrack = spotify.track(songURI)
         songDetails = []
 
-        if len(items) > 0:
-            songDetails.append({
-                "songName": items[0]['name'],
-                "artistName": ", ".join(artist['name'] for artist in items[0]['artists']),  # Iterate over the list
-                "albumName": items[0]['album']['name'],
-                "releaseDate": items[0]['album']['release_date']
-            })
-        else:
-            return None
+        artistNames = ", ".join(artist['name'] for artist in retrieveTrack['artists'])
+        
+       
+        songDetails = {
+            "artistNames": artistNames,
+            "songName": retrieveTrack['name'],
+            "albumName": retrieveTrack['album']['name'],
+            "releaseDate": retrieveTrack['album']['release_date']
+        }
+
         return songDetails
+
     
     def chat_with_GPT(self, prompt, numSongs):
         response = openai.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {
                     "role": "system",
-                    "content": f"""You are an assistant that recommends songs based on the game's title and genre. 
-                    Get different artists for each song. Limit the total number of songs being recommended to { numSongs }"""
+                    "content": f"""You are an assistant that recommends songs based on the game's title and genre.
+                    The number of songs are limited to { numSongs } in total. """
                 },
                 {
                     "role": "user",

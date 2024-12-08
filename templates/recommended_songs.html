@@ -40,7 +40,7 @@
             <ul>
                 {% for song in recommendedSongs %}
                 <li>
-                    <a href="{{ url_for('song_details', song_name = song.name, song_URI=song.song_URI|urlencode) }}">
+                    <a href="{{ url_for('song_details', song_name = song.song_name, song_URI=song.song_URI|urlencode) }}">
                         {{ song.name }} by {{ song.artist }}</a>
                 </li>
                 {% endfor %}
@@ -58,7 +58,7 @@
                 </div>
                 <p>
                     {{ form.numSongs.label }}
-                    {{ form.numSongs(min = 1, max = 20, oninput="outputUpdate(value)") }}
+                    {{ form.numSongs(min = 1, max = 5, oninput="outputUpdate(value)") }}
                     <output for="numSongs" id="selected-number-of-songs"> {{ form.numSongs.data }}</output>
                 </p>
                 <div>

@@ -4,6 +4,7 @@ from flask import Flask, render_template, url_for, redirect, request, session, f
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
+import urllib
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
 from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
 from flask_bcrypt import Bcrypt
@@ -59,6 +60,12 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
 
+#table for database with song name and the URI
+class Songs(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    song_name = db.Column(db.String(80), nullable=False)
+    song_URI = db.Column(db.String(80), nullable=False)
+
 # Registration Form, inherits from FlaskForm
 class RegisterForm(FlaskForm):
     # Username field
@@ -94,7 +101,8 @@ class NewPlaylist(FlaskForm):
     
 # comment out after creating tables
 # with app.app_context():
-#     db.create_all()
+    # db.create_all()
+    # db.drop_all()
 
 @app.route('/') # render content in home after routing
 def home():
@@ -167,18 +175,24 @@ def about():
     return render_template('about.html')
 
 #spotipy access playlists
-@app.route('/get_playlists')
+@app.route('/your_playlists')
 def get_playlists():
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()): # if not logged in in Spotify
-        auth_url = sp_oauth.get_authorized_url() # sign in through Spotify
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        auth_url = sp_oauth.get_authorize_url()
         return redirect(auth_url)
 
     playlists = sp.current_user_playlists()
-    playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
-    playlists_html = '<br>'.join(f'{name}: <a href="{url}" target="_blank">{url}</a>' for name, url in playlists_info)
-    
-    create_playlist_button = '<br><br><a href="' + url_for('create_playlist') + '"><button>Create A New Playlist</button></a>'
-    return playlists_html + create_playlist_button
+
+    playlists_info = [
+        (
+            pl['name'], 
+            pl['external_urls']['spotify'] if pl and isinstance(pl, dict) and 'external_urls' in pl and 'spotify' in pl['external_urls'] else 'No URL'
+        )
+        for pl in playlists.get('items', [])
+        if pl is not None
+    ]
+
+    return render_template('playlists.html', playlists=playlists_info)
 
 
 @app.route('/create_playlists', methods=['GET', 'POST'])
@@ -219,6 +233,7 @@ def logout():
 
 @app.route('/recommend_songs', methods = ['GET', 'POST'])
 def recommend_songs():
+    
     nameOfGame = None
     form = RecommendSongs()
     GPTResponse = None
@@ -228,7 +243,8 @@ def recommend_songs():
     songPreviews = None
     global song_name
     global song_URI
-    global artistName
+    # song_URI = None
+    # global artistName
 
     # Validations
     if form.validate_on_submit():
@@ -243,6 +259,10 @@ def recommend_songs():
             recommendedSongs += song_search.getRecommendedSongs(artist, numSongs)
 
         songPreviews = [song['preview_url'] for song in recommendedSongs if song['preview_url']]
+        
+        # Clear table before adding new songs
+        db.session.query(Songs).delete()
+        db.session.commit()
 
         for song in recommendedSongs:
             song_name = song['name']
@@ -251,29 +271,39 @@ def recommend_songs():
             print("song name:", song_name)
             print("song URI:", song_URI)
             print("artist: ", artistName)
-
+            recommendedSong = Songs(song_name = song_name, song_URI = song_URI)
+            db.session.add(recommendedSong)
+            db.session.commit()
+        
     return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
-                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs, 
+                           form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs,
                            numSongs = numSongs, songPreviews = songPreviews)
 
-@app.route('/songs/<song_name>')
+@app.route('/songs/')
 @login_required
-def song_details(song_name):
+def song_details():
+    recommendedSongs = []
     song_search = SpotifySongSearch()
-    song_URI = song_search.searchForTrackURI(song_name)
-    songArtist = song_search.searchForArtist(artistName)
-    songDetails = song_search.getSongDetails(song_name)
-    # recommendedSongsJSON = json.dumps(recommendedSongsArray)
+    song_URI = request.args.get('song_URI')
 
-    # encoded_song_URI = urllib.parse.quote(song_URI)
-    # print(encoded_song_URI)
+    # song = Songs.query.filter_by(song_name = song_name).first()
+
+    if not song_URI:
+        flash("Song not found in the database.", "danger")
+        return redirect(url_for('recommended_songs'))
+    
+    decodedSongURI = urllib.parse.unquote(song_URI)
+    songDetails = song_search.getSongDetails(decodedSongURI)
+
     for song in songDetails:
         print(song)
-
-    return render_template('recommended_song_details.html', song_name = song_name, song_URI = song_URI, songDetails = songDetails)
+    
+    return render_template('recommended_song_details.html', song_URI = song_URI, songDetails = songDetails, recommendedSongs = recommendedSongs)
 
 if __name__ == '__main__':
-    # song_search = SpotifySongSearch()
+    song_search = SpotifySongSearch()
+    # testURI = song_search.searchForTrackURI("Enemy with JID (Opening Title Version) (from the series Arcane League of Legends)")
     # print(song_search.getRecommendedSongs("BLACKPINK"))
-    # print(song_search.chat_with_GPT("League of Legends"))
+    # print(song_search.chat_with_GPT("League of Legends", 1))
+    # print(song_search.getSongDetails(testURI))
     app.run(debug=True)

@@ -9,42 +9,40 @@
 
 <script>
     window.onSpotifyIframeApiReady = (IFrameAPI) => {
-        const element = document.getElementById('embed-iframe');
-        const options = {
-            uri: "{{ song_URI }}"
-        };
-        const callback = (EmbedController) => { };
-        IFrameAPI.createController(element, options, callback);
-    };
+        // Decode the main song URI
+        const mainSongUri = decodeURIComponent("{{ song_URI }}");
+        const mainOptions = { uri: mainSongUri };
+        const embedContainer = document.getElementById('embed-iframe');
+        IFrameAPI.createController(embedContainer, mainOptions, () => {});
+
+        // Render recommended songs
+        var recommendedSongs = JSON.parse('{{ recommendedSongs | tojson }}');
+        recommendedSongs.forEach(song => {
+            const element = document.createElement('div'); // Create a div for each song
+            const options = {
+                uri: decodeURIComponent(song.song_URI)
+            };
+            IFrameAPI.createController(element, options, () => {});
+            embedContainer.appendChild(element); // Append to the embed container
+        });
+    }
 </script>
 
 <body>
     <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-    <div id="embed-iframe">
-        {% for song in recommendedSongs %}
-        <script>
-            window.onSpotifyIframeApiReady = (IFrameAPI) => {
-                const element = document.createElement('div');  // createe a new div for each song iFrame
-                const options = {
-                    uri: "{{ song.song_URI }}"  // passes the actual song URI dynamically here
-                };
-                const callback = (EmbedController) => { };
-                IFrameAPI.createController(element, options, callback);
-                document.getElementById('embed-iframe').appendChild(element);  // appends to the existing container for iFrame
-            };
-        </script>
-        {% endfor %}
-    </div>
-    {% for details in songDetails %}
+    <div id="embed-iframe"></div>
+
+    {% if songDetails is defined %}
     <p>
-    Artist: {{ details.artistName }}
-    <br>
-    Song Name: {{ details.songName }}
-    <br>
-    Album Name: {{ details.albumName }}
-    <br>
-    Release Date: {{ details.releaseDate}}
+        Artist(s): {{ songDetails.artistNames }}
+        <br>
+        Song Name: {{ songDetails.songName }}
+        <br>
+        Album Name: {{ songDetails.albumName }}
+        <br>
+        Release Date: {{ songDetails.releaseDate }}
     </p>
-    {% endfor %}
+    {% endif %}
 </body>
+
 </html>
