@@ -234,21 +234,24 @@ def create_playlist():
 @app.route('/add_to_playlist', methods=['POST'])
 def add_to_playlist():
     playlist_id = request.form.get('playlist_id') 
-    song_url = request.form.get('song_URI')  # Correct key name
+    song_urls = request.form.getlist('song_URIs')  # Correct key name
     song_URIs = []
     print(f"Playlist ID: {playlist_id}")
-    print(f"Song URL: {song_url}")
+    print(f"Song URL: {song_urls}")
 
-    if playlist_id and song_url:
-        song_uri = song_url.replace("https://open.spotify.com/track/", "spotify:track:").split("?")[0]
-        song_URIs.append(song_URI)
-        print(f"Transformed Song URI: {song_uri}")
-        sp.playlist_add_items(playlist_id, song_URIs)
-        flash(f"Successfully added the song to the playlist!", 'success')
+    if playlist_id and song_urls:
+            for spotify_url in song_urls:
+                spotify_url.replace("https://open.spotify.com/track/", "spotify:track:").split("?")[0]
+                song_URIs.append(spotify_url)
+
+            print(f"Transformed Song URI: {song_URIs}")
+            sp.playlist_add_items(playlist_id, song_URIs)
+            flash(f"Successfully added the song to the playlist!", 'success')
     else:
         flash("No playlist or song selected!", 'warning')
 
     return redirect(url_for('recommend_songs'))
+
 
 @app.route('/logout', methods = ['GET', 'POST'])
 @login_required
@@ -351,10 +354,10 @@ if __name__ == '__main__':
     # print(song_search.chat_with_GPT("League of Legends", 1))
     # print(song_search.getSongDetails(testURI))
     app.run(debug=True)
-    games = fetch_games(steam_ID)
+    # games = fetch_games(steam_ID)
 
 
-    for app_id, details in games.items():
-        print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")      
-    print("\n\n\n\n")
+    # for app_id, details in games.items():
+    #     print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")      
+    # print("\n\n\n\n")
   

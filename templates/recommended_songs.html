@@ -39,12 +39,15 @@
             <h2>Recommended Tracks:</h2>
             <ul>
                 {% for song in recommendedSongs %}
-                <li>
+                <li> 
+                    <input type="checkbox" name="song_URIs" value="{{ song.spotify_url }}">
                     <a
                         href="{{ url_for('song_details', song_name = song.song_name, song_URI=song.song_URI|urlencode) }}">
                         {{ song.name }} by {{ song.artist }}</a>
                 </li>
+                {% endfor %}
             </ul>
+            <button type="submit">Add to Playlist</button>
             <form method="POST" action="{{ url_for('add_to_playlist') }}">
                 <label for="playlist_{{ loop.index }}">Choose a playlist:</label>
                 <select name="playlist_id" id="playlist_{{ loop.index }}">
@@ -52,10 +55,7 @@
                     <option value="{{ playlist_id }}">{{ name }}</option>
                     {% endfor %}
                 </select>
-                <input type="hidden" name="song_URI" value="{{ song.spotify_url}}">
-                <button type="submit">Add to Playlist</button>
             </form>
-            {% endfor %}
             </li>
             {% else %}
             <p>Unable to generate recommended songs</p>
@@ -83,3 +83,4 @@
 </body>
 
 </html>
+  
