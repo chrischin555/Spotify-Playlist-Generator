@@ -5,7 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Current Song</title>
+    <div class="topnav">
+        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('get_playlists') }}">Playlists</a>
+        <a href="{{ url_for('account') }}">Account</a>
+        <a href="{{ url_for ('recommend_songs')}}">Get Recommended Songs</a>
+        <a href="{{url_for('logout')}}">Logout</a> <!--link that routes to login page after logging out -->
+    </div>
 </head>
+
 
 <script>
     window.onSpotifyIframeApiReady = (IFrameAPI) => {

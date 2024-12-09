@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playlists</title>
-</head>
-<body>
     <div class="topnav">
         <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('get_playlists') }}">Playlists</a>
-        <a href="{{ url_for('recommend_songs') }}">Song Recs</a>
-        <a href="#">Account</a>
+        <a href="{{ url_for('account') }}">Account</a>
+        <a href="{{ url_for ('recommend_songs')}}">Get Recommended Songs</a>
+        <a href="{{url_for('logout')}}">Logout</a> <!--link that routes to login page after logging out -->
     </div>
-
+</head>
+<body>
     <h1>Your Playlists</h1>
 
     {% if playlists %}

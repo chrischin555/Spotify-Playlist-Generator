@@ -162,7 +162,8 @@ class SpotifySongSearch:
             "name" : track['name'],
             "artist" : track['artists'][0]['name'],
             "preview_url": track['preview_url'], 
-            "song_URI": track['uri']
+            "song_URI": track['uri'],
+            "spotify_url": track['external_urls']['spotify']
         })
 
         return recommendedSongs

@@ -13,6 +13,9 @@ from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 from recommend_songs import RecommendSongs
 from song_search import SpotifySongSearch
+from steam_web_api import Steam
+from steam_owned_games import fetch_games
+from steam_owned_games import fetch_recentlyplayed
 
 app = Flask(__name__)
 # create database instance, connect app file to database
@@ -29,6 +32,10 @@ login_manager.login_view = "login"
 #Spotipy variables, spotify dev info + sp_oauth
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
+KEY = os.getenv("STEAM_API_KEY")
+steam = Steam(KEY)
+steam_ID = "76561198108372769"
+
 redirect_uri = 'http://localhost:5000/callback'
 scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
 
@@ -175,7 +182,7 @@ def about():
     return render_template('about.html')
 
 #spotipy access playlists
-@app.route('/your_playlists')
+@app.route('/your_playlists', methods = ['GET', 'POST'])
 def get_playlists():
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         auth_url = sp_oauth.get_authorize_url()
@@ -224,6 +231,25 @@ def create_playlist():
     
     return render_template('new_playlist.html', form=form)
 
+@app.route('/add_to_playlist', methods=['POST'])
+def add_to_playlist():
+    playlist_id = request.form.get('playlist_id') 
+    song_url = request.form.get('song_URI')  # Correct key name
+    song_URIs = []
+    print(f"Playlist ID: {playlist_id}")
+    print(f"Song URL: {song_url}")
+
+    if playlist_id and song_url:
+        song_uri = song_url.replace("https://open.spotify.com/track/", "spotify:track:").split("?")[0]
+        song_URIs.append(song_URI)
+        print(f"Transformed Song URI: {song_uri}")
+        sp.playlist_add_items(playlist_id, song_URIs)
+        flash(f"Successfully added the song to the playlist!", 'success')
+    else:
+        flash("No playlist or song selected!", 'warning')
+
+    return redirect(url_for('recommend_songs'))
+
 @app.route('/logout', methods = ['GET', 'POST'])
 @login_required
 def logout():
@@ -233,7 +259,6 @@ def logout():
 
 @app.route('/recommend_songs', methods = ['GET', 'POST'])
 def recommend_songs():
-    
     nameOfGame = None
     form = RecommendSongs()
     GPTResponse = None
@@ -245,15 +270,32 @@ def recommend_songs():
     global song_URI
     # song_URI = None
     # global artistName
+    playlists_info = []
 
     # Validations
     if form.validate_on_submit():
+         # To get playlists again
+        if not sp_oauth.validate_token(cache_handler.get_cached_token()):  # if not logged in in Spotify
+            auth_url = sp_oauth.get_authorize_url()  # sign in through Spotify
+            return redirect(auth_url)
+        
         nameOfGame = form.nameOfGame.data
         numSongs = form.numSongs.data
         form.nameOfGame.data = ''
         song_search = SpotifySongSearch()
         GPTResponse = song_search.chat_with_GPT(nameOfGame, numSongs)
         artistNames = json.loads(GPTResponse.function_call.arguments).get("artistNames", [])
+
+        # Get user playlists
+        playlists = sp.current_user_playlists()
+        playlists_info = [
+            (
+                pl['name'], 
+                pl['external_urls']['spotify'] if pl and isinstance(pl, dict) and 'external_urls' in pl and 'spotify' in pl['external_urls'] else 'No URL'
+            )
+            for pl in playlists.get('items', [])
+            if pl is not None
+        ]
 
         for artist in artistNames:
             recommendedSongs += song_search.getRecommendedSongs(artist, numSongs)
@@ -268,16 +310,18 @@ def recommend_songs():
             song_name = song['name']
             song_URI = song['song_URI']
             artistName = song['artist']
+            songURL = song['spotify_url']
             print("song name:", song_name)
             print("song URI:", song_URI)
             print("artist: ", artistName)
+            print("song url: ", songURL)
             recommendedSong = Songs(song_name = song_name, song_URI = song_URI)
             db.session.add(recommendedSong)
             db.session.commit()
         
     return render_template('recommended_songs.html', nameOfGame = nameOfGame, 
                            form = form, GPTResponse = GPTResponse, recommendedSongs = recommendedSongs,
-                           numSongs = numSongs, songPreviews = songPreviews)
+                           numSongs = numSongs, songPreviews = songPreviews, playlists = playlists_info)
 
 @app.route('/songs/')
 @login_required
@@ -307,3 +351,10 @@ if __name__ == '__main__':
     # print(song_search.chat_with_GPT("League of Legends", 1))
     # print(song_search.getSongDetails(testURI))
     app.run(debug=True)
+    games = fetch_games(steam_ID)
+
+
+    for app_id, details in games.items():
+        print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")      
+    print("\n\n\n\n")
+  

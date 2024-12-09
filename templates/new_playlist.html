@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Create New Playlist</title>
+    <div class="topnav">
+        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('get_playlists') }}">Playlists</a>
+        <a href="{{ url_for('account') }}">Account</a>
+        <a href="{{ url_for ('recommend_songs')}}">Get Recommended Songs</a>
+        <a href="{{url_for('logout')}}">Logout</a> <!--link that routes to login page after logging out -->
+    </div>
 </head>
 <body>
     <h2>Create a New Playlist</h2>
