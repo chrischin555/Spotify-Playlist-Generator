@@ -35,6 +35,8 @@ client_secret = os.getenv('CLIENT_SECRET')
 KEY = os.getenv("STEAM_API_KEY")
 steam = Steam(KEY)
 steam_ID = "76561198108372769"
+stored_steam_ID = None
+gameNames = []
 
 redirect_uri = 'http://localhost:5000/callback'
 scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
@@ -162,9 +164,11 @@ def callback():
     return redirect(url_for('dashboard'))
 
 # account information
-@app.route('/account', methods = ['GET'])
+@app.route('/account', methods = ['GET', 'POST'])
 @login_required
 def account():
+    global stored_steam_ID
+    global gameNames
     # Check if the Spotify token is valid
     if sp_oauth.validate_token(cache_handler.get_cached_token()):
         # If valid, set isSpotifyConnected to True
@@ -173,8 +177,21 @@ def account():
     else:
         # If not valid, set isSpotifyConnected to False
         isSpotifyConnected = False
+    
+    if request.method == 'POST':
+        stored_steam_ID = request.form.get("steam_id")
+        if stored_steam_ID:
+            session['steam_id'] = stored_steam_ID  # Save to session
+            flash(f"Steam ID {stored_steam_ID} has been saved!", "success")
+        else:
+            flash("Please enter a valid Steam ID.", "warning")
 
-    return render_template('account.html', current_user = current_user, isSpotifyConnected = isSpotifyConnected)
+        # Retrieve Steam ID from session if it exists
+        steam_id = session.get('steam_id')
+
+        print("steam ID:", steam_id)
+
+    return render_template('account.html', current_user = current_user, isSpotifyConnected = isSpotifyConnected, steam_id = stored_steam_ID)
 
 @app.route('/about')
 @login_required
@@ -235,20 +252,29 @@ def create_playlist():
 def add_to_playlist():
     playlist_id = request.form.get('playlist_id') 
     song_urls = request.form.getlist('song_URIs')  # Correct key name
-    song_URIs = []
+    # song_URIs = []
+    print(f"Form Data Received: {request.form}")
     print(f"Playlist ID: {playlist_id}")
     print(f"Song URL: {song_urls}")
 
     if playlist_id and song_urls:
-            for spotify_url in song_urls:
-                spotify_url.replace("https://open.spotify.com/track/", "spotify:track:").split("?")[0]
-                song_URIs.append(spotify_url)
+        song_URIs = [
+            url.replace("https://open.spotify.com/track/", "spotify:track:").split("?")[0]
+            for url in song_urls
+        ]
+        print(f"Transformed Song URIs: {song_URIs}")
 
-            print(f"Transformed Song URI: {song_URIs}")
+        try:
             sp.playlist_add_items(playlist_id, song_URIs)
-            flash(f"Successfully added the song to the playlist!", 'success')
+            flash("Successfully added songs to the playlist!", 'success')
+        except Exception as e:
+            print(f"Error Adding Songs: {e}")
+            flash("Error occurred while adding songs to the playlist.", 'danger')
     else:
-        flash("No playlist or song selected!", 'warning')
+        if not playlist_id:
+            flash("No playlist selected!", 'warning')
+        if not song_urls:
+            flash("No songs selected!", 'warning')
 
     return redirect(url_for('recommend_songs'))
 
@@ -275,6 +301,18 @@ def recommend_songs():
     # global artistName
     playlists_info = []
 
+    steam_ID = session.get('steam_id')
+    if(steam_ID):
+        games = fetch_games(steam_ID)
+        for app_id, details in games.items():
+            print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")
+            gameNames.append(details['Name'])
+    
+    form.nameOfGame.choices = gameNames
+
+    for names in gameNames:
+            print("names: " + names)
+
     # Validations
     if form.validate_on_submit():
          # To get playlists again
@@ -282,8 +320,8 @@ def recommend_songs():
             auth_url = sp_oauth.get_authorize_url()  # sign in through Spotify
             return redirect(auth_url)
         
-        nameOfGame = form.nameOfGame.data
         numSongs = form.numSongs.data
+        nameOfGame = form.nameOfGame.data
         form.nameOfGame.data = ''
         song_search = SpotifySongSearch()
         GPTResponse = song_search.chat_with_GPT(nameOfGame, numSongs)
@@ -356,8 +394,14 @@ if __name__ == '__main__':
     app.run(debug=True)
     # games = fetch_games(steam_ID)
 
-
+    # gameNames = []
     # for app_id, details in games.items():
-    #     print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")      
+    #     print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")
+    #     gameNames.append(details['Name'])
     # print("\n\n\n\n")
+
+    # for names in gameNames:
+    #     print("names: " + names)
+
+
   

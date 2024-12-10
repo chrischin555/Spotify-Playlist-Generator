@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recommended Songs</title>
+    <div class="topnav">
+        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('get_playlists') }}">Playlists</a>
+        <a href="{{ url_for('account') }}">Account</a>
+        <a href="{{ url_for ('recommend_songs')}}">Get Recommended Songs</a>
+        <a href="{{url_for('logout')}}">Logout</a> <!--link that routes to login page after logging out -->
+    </div>
     <script>
         function outputUpdate(numSongs) {
             document.querySelector('#selected-number-of-songs').value = numSongs;
@@ -37,24 +44,24 @@
             <p>{{ GPTResponse }}</p>
             {% if recommendedSongs %}
             <h2>Recommended Tracks:</h2>
-            <ul>
-                {% for song in recommendedSongs %}
-                <li> 
-                    <input type="checkbox" name="song_URIs" value="{{ song.spotify_url }}">
-                    <a
-                        href="{{ url_for('song_details', song_name = song.song_name, song_URI=song.song_URI|urlencode) }}">
-                        {{ song.name }} by {{ song.artist }}</a>
-                </li>
-                {% endfor %}
-            </ul>
-            <button type="submit">Add to Playlist</button>
             <form method="POST" action="{{ url_for('add_to_playlist') }}">
-                <label for="playlist_{{ loop.index }}">Choose a playlist:</label>
-                <select name="playlist_id" id="playlist_{{ loop.index }}">
+                <ul>
+                    {% for song in recommendedSongs %}
+                    <li>
+                        <input type="checkbox" name="song_URIs" value="{{ song.spotify_url }}">
+                        <a
+                            href="{{ url_for('song_details', song_name = song.song_name, song_URI=song.song_URI|urlencode) }}">
+                            {{ song.name }} by {{ song.artist }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <label for="playlist-select">Choose a playlist:</label>
+                <select name="playlist_id" id="playlist-select" class="form-select">
                     {% for name, playlist_id in playlists %}
                     <option value="{{ playlist_id }}">{{ name }}</option>
                     {% endfor %}
                 </select>
+                <button type="submit" class="btn btn-primary mt-2">Add to Playlist</button>
             </form>
             </li>
             {% else %}
@@ -63,19 +70,17 @@
             {% else %}
             <h1>Get Song Recommendations</h1>
             <br>
-            <form method="POST" action="">
+            <form method="POST" action=" {{url_for('recommend_songs')}}">
                 {{ form.hidden_tag() }}
-                <div>
-                    {{ form.nameOfGame.label (class="form-label") }} {{ form.nameOfGame() }}
+                <div class="mb-3">
+                    {{ form.nameOfGame.label (class="form-label") }} {{ form.nameOfGame(class="form-select") }}
                 </div>
-                <p>
+                <div class="mb-3">
                     {{ form.numSongs.label }}
                     {{ form.numSongs(min = 1, max = 5, oninput="outputUpdate(value)") }}
                     <output for="numSongs" id="selected-number-of-songs"> {{ form.numSongs.data }}</output>
-                </p>
-                <div>
-                    {{ form.submit }}
                 </div>
+                {{ form.submit }}
             </form>
             {% endif %}
         </div>
@@ -83,4 +88,3 @@
 </body>
 
 </html>
-  
