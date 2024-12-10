@@ -1,37 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playlists</title>
-    <div class="topnav">
-        <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('get_playlists') }}">Playlists</a>
-        <a href="{{ url_for('account') }}">Account</a>
-        <a href="{{ url_for ('recommend_songs')}}">Get Recommended Songs</a>
-        <a href="{{url_for('logout')}}">Logout</a> <!--link that routes to login page after logging out -->
-    </div>
-</head>
-<body>
-    <h1>Your Playlists</h1>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: lightblue;
+            min-height: 100vh;
+            margin: 0;
+        }
 
-    {% if playlists %}
-        <ul>
-            {% for name, url in playlists %}
+        .container {
+            max-width: 400px;
+            background-color: rgb(165, 180, 204);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        .center-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="btn btn-secondary mx-1" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-secondary mx-1" href="{{ url_for('get_playlists') }}">Playlists</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-secondary mx-1" href="{{ url_for('account') }}">Account</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-secondary mx-1" href="{{ url_for('recommend_songs') }}">Get Recommended
+                            Songs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-secondary mx-1" href="{{ url_for('about') }}">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-secondary mx-1" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="center-wrapper">
+        <div class="container text-center">
+            <h1>Your Playlists</h1>
+            {% if playlists %}
+            <ul>
+                {% for name, url in playlists %}
                 <li>
                     {{ name }}
                     <button>
                         <a href="{{ url }}" target="_blank">↗</a>
                     </button>
                 </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>You have no playlists to display.</p>
-    {% endif %}
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>You have no playlists to display.</p>
+            {% endif %}
 
-    <button>
-        <a href="{{ url_for('create_playlist') }}">Create A New Playlist</a>
-    </button>
+            <a class = "btn btn-primary" href ="{{ url_for('create_playlist') }}" role="button">
+                Create a New Playlist
+            </a>
+        </div>
+    </div>
 </body>
 </html>

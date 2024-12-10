@@ -12,15 +12,32 @@
             min-height: 100vh;
             margin: 0;
         }
+
+        .container {
+            max-width: 400px;
+            background-color: rgb(165, 180, 204);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        .center-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
     </style>
 </head>
 
 <body>
-    <h1 class="text-center">Game-Play</h1>
-    <div class="parent container d-flex justify-content-center align-items-center h-100">
-        <div class="buttons">
-            <a class="btn btn-primary" href="{{url_for('login')}}" role=button>Login</a>
-            <a class="btn btn-primary" href="{{url_for('register')}}" role=button>Sign Up</a>
+    <div class="center-wrapper">
+        <div class="container text-center">
+            <h1 class="text-center">Game-Play</h1>
+            <div class="buttons">
+                <a class="btn btn-primary" href="{{url_for('login')}}" role=button>Login</a>
+                <a class="btn btn-primary" href="{{url_for('register')}}" role=button>Sign Up</a>
+            </div>
         </div>
     </div>
 </body>

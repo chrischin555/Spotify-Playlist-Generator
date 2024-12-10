@@ -15,7 +15,6 @@ from recommend_songs import RecommendSongs
 from song_search import SpotifySongSearch
 from steam_web_api import Steam
 from steam_owned_games import fetch_games
-from steam_owned_games import fetch_recentlyplayed
 
 app = Flask(__name__)
 # create database instance, connect app file to database
@@ -200,6 +199,7 @@ def about():
 
 #spotipy access playlists
 @app.route('/your_playlists', methods = ['GET', 'POST'])
+@login_required
 def get_playlists():
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         auth_url = sp_oauth.get_authorize_url()
@@ -220,6 +220,7 @@ def get_playlists():
 
 
 @app.route('/create_playlists', methods=['GET', 'POST'])
+@login_required
 def create_playlist():
     # Check if user is authenticated with Spotify
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
@@ -249,6 +250,7 @@ def create_playlist():
     return render_template('new_playlist.html', form=form)
 
 @app.route('/add_to_playlist', methods=['POST'])
+@login_required
 def add_to_playlist():
     playlist_id = request.form.get('playlist_id') 
     song_urls = request.form.getlist('song_URIs')  # Correct key name
@@ -287,6 +289,7 @@ def logout():
 
 
 @app.route('/recommend_songs', methods = ['GET', 'POST'])
+@login_required
 def recommend_songs():
     nameOfGame = None
     form = RecommendSongs()
