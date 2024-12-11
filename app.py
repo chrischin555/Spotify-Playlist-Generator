@@ -13,7 +13,7 @@ app = Flask(__name__)
 # create database instance, connect app file to database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db' 
 db = SQLAlchemy(app)
-app.config['SECRET_KEY'] = "HjsX4l6X8dcJ7MHKOQaudZ4YD2yFTGwW" # secret key to establish cookie
+app.config['SECRET_KEY'] = "X" # secret key to establish cookie
 bcrypt = Bcrypt(app)
 
 # Allows our app and flask login to work together and handle things when logging in, loading in users, etc.
@@ -22,8 +22,8 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 #Spotipy variables, stopify dev info + sp_oauth
-client_id = '0985d3da19014f2588b78ccd7d172db0'
-client_secret = 'a73d7992813e4ffab54fc1b719944dca'
+client_id = 'X'
+client_secret = 'X'
 redirect_uri = 'http://localhost:5000/callback'
 scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
 
