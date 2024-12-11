@@ -11,7 +11,7 @@ Without the libraries installed above, the application cannot be run.
 
 After installing the libraries, you are ready to run the application!
 For command line users:
-![image](https://github.com/user-attachments/assets/4d6e7e31-732d-4011-980d-9165e7834497). Afterward, go to localhost:5000, where the application will be hosted.
+![image](https://github.com/user-attachments/assets/4d6e7e31-732d-4011-980d-9165e7834497) Afterward, go to localhost:5000, where the application will be hosted.
 
 For IDE users, such as VSCode:
 On the app.py file, click on "Run Python file." Afterward, go to localhost:5000, which is where the application will be hosted.
