@@ -16,11 +16,13 @@ from song_search import SpotifySongSearch
 from steam_web_api import Steam
 from steam_owned_games import fetch_games
 
+# Where the Flask web application will be run. 
+
 app = Flask(__name__)
-# create database instance, connect app file to database
+# Creates a database instance, connecting app file to database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db' 
 db = SQLAlchemy(app)
-app.config['SECRET_KEY'] = "HjsX4l6X8dcJ7MHKOQaudZ4YD2yFTGwW" # secret key to establish cookie
+app.config['SECRET_KEY'] = "HjsX4l6X8dcJ7MHKOQaudZ4YD2yFTGwW" # Secret key to establish cookie
 bcrypt = Bcrypt(app)
 
 # Allows our app and flask login to work together and handle things when logging in, loading in users, etc.
@@ -31,13 +33,13 @@ login_manager.login_view = "login"
 #Spotipy variables, spotify dev info + sp_oauth
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
-KEY = os.getenv("STEAM_API_KEY")
+KEY = os.getenv("STEAM_API_KEY") # Steam API key
 steam = Steam(KEY)
-steam_ID = "76561198108372769"
+# steam_ID = "76561198108372769"
 stored_steam_ID = None
 gameNames = []
 
-redirect_uri = 'http://localhost:5000/callback'
+redirect_uri = 'http://localhost:5000/callback' # Initializing a redirect URI; 
 scope = 'playlist-read-private, playlist-modify-public, playlist-modify-private'
 
 cache_handler = FlaskSessionCacheHandler(session)
@@ -138,6 +140,7 @@ def login():
 @app.route('/dashboard', methods = ['GET', 'POST'])
 @login_required
 def dashboard():
+    # Renders the dashboard page.
     return render_template('dashboard.html')
 
 @app.route('/register', methods = ['GET', 'POST'])
@@ -145,7 +148,7 @@ def register():
     form = RegisterForm()
 
     # Whenever we submit the form, we immediately create a hashed version of the password. In other words, 
-    # when we type in our password, it is hashed instead of encrypted. Once it's hashed, new user added to database.
+    # When we type in our password, it is hashed instead of encrypted. Once it's hashed, new user added to database.
     # Afterward, redirect to login page. 
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
@@ -157,18 +160,19 @@ def register():
     
     return render_template('register.html', form=form)
 
-#spotify token refresh
+# Spotify token refresh
 @app.route('/callback')
 def callback():
     sp_oauth.get_access_token(request.args['code']) #refreshes the spotify token (?)
     return redirect(url_for('dashboard'))
 
-# account information
+# Account information
 @app.route('/account', methods = ['GET', 'POST'])
 @login_required
 def account():
     global stored_steam_ID
     global gameNames
+
     # Check if the Spotify token is valid
     if sp_oauth.validate_token(cache_handler.get_cached_token()):
         # If valid, set isSpotifyConnected to True
@@ -198,7 +202,7 @@ def account():
 def about():
     return render_template('about.html')
 
-#spotipy access playlists
+# Spotipy access playlists associated with the current user.
 @app.route('/your_playlists', methods = ['GET', 'POST'])
 @login_required
 def get_playlists():
@@ -250,22 +254,23 @@ def create_playlist():
     
     return render_template('new_playlist.html', form=form)
 
+# Adds the songs to the playlist selected.
 @app.route('/add_to_playlist', methods=['POST'])
 @login_required
 def add_to_playlist():
     playlist_id = request.form.get('playlist_id') 
     song_urls = request.form.getlist('song_URIs')  # Correct key name
     # song_URIs = []
-    print(f"Form Data Received: {request.form}")
-    print(f"Playlist ID: {playlist_id}")
-    print(f"Song URL: {song_urls}")
+    # print(f"Form Data Received: {request.form}")
+    # print(f"Playlist ID: {playlist_id}")
+    # print(f"Song URL: {song_urls}")
 
     if playlist_id and song_urls:
         song_URIs = [
             url.replace("https://open.spotify.com/track/", "spotify:track:").split("?")[0]
             for url in song_urls
         ]
-        print(f"Transformed Song URIs: {song_URIs}")
+        # print(f"Transformed Song URIs: {song_URIs}")
 
         try:
             sp.playlist_add_items(playlist_id, song_URIs)
@@ -292,6 +297,13 @@ def logout():
 @app.route('/recommend_songs', methods = ['GET', 'POST'])
 @login_required
 def recommend_songs():
+    """
+    The way the recommend songs function works:
+    1) Pass form data for the name of the game
+    2) Pass the name of the game to chat_with_GPT to generate the artist names for each song it recommends
+    3) For each artist name in the list of artist names, pass it to the getRecommendedSongs function.
+    4) After generating each song, add it to the list and add the song name and URI to the Songs database.
+    """
     nameOfGame = None
     form = RecommendSongs()
     GPTResponse = None
@@ -309,7 +321,7 @@ def recommend_songs():
     if(steam_ID):
         games = fetch_games(steam_ID)
         for app_id, details in games.items():
-            print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")
+            # print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")
             gameNames.append(details['Name'])
     
     form.nameOfGame.choices = gameNames
@@ -371,6 +383,10 @@ def recommend_songs():
 @app.route('/songs/')
 @login_required
 def song_details():
+    """
+    Display the song's details. To do so, the song's URI will be referenced in the database in order to show the
+    correct song.
+    """
     recommendedSongs = []
     song_search = SpotifySongSearch()
     song_URI = request.args.get('song_URI')
@@ -395,9 +411,7 @@ if __name__ == '__main__':
     # print(song_search.getRecommendedSongs("BLACKPINK"))
     # print(song_search.chat_with_GPT("League of Legends", 1))
     # print(song_search.getSongDetails(testURI))
-    app.run(debug=True)
     # games = fetch_games(steam_ID)
-
     # gameNames = []
     # for app_id, details in games.items():
     #     print(f"App ID: {app_id}, Name: {details['Name']}, Playtime: {details['Playtime (Minutes)']} minutes")
@@ -406,6 +420,7 @@ if __name__ == '__main__':
 
     # for names in gameNames:
     #     print("names: " + names)
+    app.run(debug=True)
 
 
   
