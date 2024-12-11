@@ -126,6 +126,7 @@ def login():
         # Match = log in and redirect to dashboard.
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
+                session.clear()
                 login_user(user)
                 #For logging into Spotify
                 if not sp_oauth.validate_token(cache_handler.get_cached_token()): #if not logged in in spotify
