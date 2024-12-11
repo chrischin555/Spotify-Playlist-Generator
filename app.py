@@ -15,7 +15,7 @@ app = Flask(__name__)
 # create database instance, connect app file to database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db' 
 db = SQLAlchemy(app)
-app.config['SECRET_KEY'] = "HjsX4l6X8dcJ7MHKOQaudZ4YD2yFTGwW" # secret key to establish cookie
+app.config['SECRET_KEY'] = "X" # secret key to establish cookie
 bcrypt = Bcrypt(app)
 
 
